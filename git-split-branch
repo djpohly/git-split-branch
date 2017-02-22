@@ -67,7 +67,7 @@ set_ident() {
 
 get_reparents() {
 	local parentstr=
-	for parent; do
+	for parent in "$@"; do
 		for reparent in $(map "$parent"); do
 			case "$parentstr " in
 			*" -p $reparent "*)
@@ -151,10 +151,10 @@ print_params() {
 	echo "Remainder: $rembr"
 	echo "Branches:"
 	eval set -- "$dstbrs"
-	for branch; do
+	for branch in "$@"; do
 		printf ' - %s:' "$branch"
 		eval set -- "${dstfiles[$branch]}"
-		for path; do
+		for path in "$@"; do
 			printf ' %s' "$path"
 		done
 		echo
@@ -183,7 +183,7 @@ export GIT_INDEX_FILE
 
 # Set up ID map for rewriting parents on each branch
 eval set -- "$dstbrs" "$rembr"
-for branch; do
+for branch in "$@"; do
 	mkdir ../map-"$branch" || die "Could not create map-$branch/ directory"
 done
 
@@ -252,7 +252,7 @@ while read commit parents; do
 	tmptree=$commit
 
 	eval set -- "$dstbrs"
-	for branch; do
+	for branch in "$@"; do
 		mapbranch=$branch
 
 		# Get just the specified files into the index
@@ -280,9 +280,9 @@ done <../revs
 #echo
 
 srcrev=$(git rev-parse "$srcbr")
+eval set -- "$dstbrs"
 {
-	eval set -- "$dstbrs"
-	for branch; do
+	for branch in "$@"; do
 		mapbranch=$branch
 		printf 'create refs/heads/%s %s\n' "$branch" "$(map "$srcrev")"
 	done
