@@ -148,22 +148,6 @@ while branch=$1 && shift; do
 	done
 done
 
-print_params() {
-	echo "Source: $srcbr"
-	echo "Remainder: $rembr"
-	echo "Branches:"
-	eval set -- "$dstbrs"
-	for branch in "$@"; do
-		printf ' - %s:' "$branch"
-		eval set -- "${dstfiles[$branch]}"
-		for path in "$@"; do
-			printf ' %s' "$path"
-		done
-		echo
-	done
-}
-#print_params
-
 orig_dir=$(pwd)
 mkdir -p "$tempdir/t" &&
 tempdir="$(cd "$tempdir"; pwd)" &&
@@ -231,7 +215,7 @@ fi
 while read commit parents; do
 	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
 
-	#report_progress
+	report_progress
 
 	GIT_COMMIT=$commit
 	export GIT_COMMIT
@@ -279,7 +263,7 @@ while read commit parents; do
 		die "could not write rewritten commit"
 done <../revs
 
-#echo
+echo
 
 srcrev=$(git rev-parse "$srcbr")
 eval set -- "$dstbrs"
