@@ -261,9 +261,7 @@ while read commit parents; do
 		git reset -q $tmptree -- "$@"
 
 		parentstr=$(get_reparents $parents)
-
-		newtree=$(git write-tree)
-		git_commit_non_empty_tree "$newtree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
+		git_commit_non_empty_tree "$(git write-tree)" $parentstr < ../message > "../map-$mapbranch/$commit" ||
 			die "could not write rewritten commit"
 
 		# Set up new tree without extracted files
@@ -275,9 +273,7 @@ while read commit parents; do
 
 	mapbranch=$rembr
 	parentstr=$(get_reparents $parents)
-
-	newtree=$tmptree
-	git_commit_non_empty_tree "$newtree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
+	git_commit_non_empty_tree "$tmptree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
 		die "could not write rewritten commit"
 done <../revs
 
