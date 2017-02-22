@@ -4,9 +4,9 @@ functions=$(cat << \EOF
 map()
 {
 	# if it was not rewritten, take the original
-	if test -r "$workdir/../map/$1"
+	if test -r "$workdir/../map-$mapbranch/$1"
 	then
-		cat "$workdir/../map/$1"
+		cat "$workdir/../map-$mapbranch/$1"
 	else
 		echo "$1"
 	fi
@@ -63,6 +63,22 @@ set_ident () {
 	parse_ident_from_commit author AUTHOR committer COMMITTER
 	finish_ident AUTHOR
 	finish_ident COMMITTER
+}
+
+get_reparents () {
+	local parentstr=
+	for parent in $parents; do
+		for reparent in $(map "$parent"); do
+			case "$parentstr " in
+			*" -p $reparent "*)
+				;;
+			*)
+				parentstr="$parentstr -p $reparent"
+				;;
+			esac
+		done
+	done
+	printf '%s\n' -- "$parentstr"
 }
 
 USAGE="[-d <directory>] [-r <branch>] <sbranch>
@@ -130,18 +146,21 @@ while branch=$1 && shift; do
 	done
 done
 
-echo "Source: $srcbr"
-echo "Remainder: $rembr"
-echo "Branches:"
-eval set -- "$dstbrs"
-for branch; do
-	printf ' - %s:' "$branch"
-	eval set -- "${dstfiles[$branch]}"
-	for path; do
-		printf ' %s' "$path"
+print_params() {
+	echo "Source: $srcbr"
+	echo "Remainder: $rembr"
+	echo "Branches:"
+	eval set -- "$dstbrs"
+	for branch; do
+		printf ' - %s:' "$branch"
+		eval set -- "${dstfiles[$branch]}"
+		for path; do
+			printf ' %s' "$path"
+		done
+		echo
 	done
-	echo
-done
+}
+#print_params
 
 orig_dir=$(pwd)
 mkdir -p "$tempdir/t" &&
@@ -152,6 +171,12 @@ tempdir="$(cd "$tempdir"; pwd)" &&
 
 # Remove tempdir on exit
 trap 'cd "$orig_dir"; rm -rf "$tempdir"' 0
+
+ORIG_GIT_DIR="$GIT_DIR"
+ORIG_GIT_WORK_TREE="$GIT_WORK_TREE"
+ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
+GIT_WORK_TREE=.
+export GIT_DIR GIT_WORK_TREE
 
 GIT_INDEX_FILE="$(pwd)/../index"
 export GIT_INDEX_FILE
@@ -204,7 +229,7 @@ fi
 while read commit parents; do
 	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
 
-	report_progress
+	#report_progress
 
 	GIT_COMMIT=$commit
 	export GIT_COMMIT
@@ -228,12 +253,13 @@ while read commit parents; do
 
 	eval set -- "$dstbrs"
 	for branch; do
+		mapbranch=$branch
+
 		# Get just the specified files into the index
 		git read-tree --empty
 		eval set -- "${dstfiles[$branch]}"
-		git reset $tmptree -- "$@"
+		git reset -q $tmptree -- "$@"
 
-		# XXX make map take a $branch parameter, update other uses
 		parentstr=
 		for parent in $parents; do
 			for reparent in $(map "$parent"); do
@@ -248,18 +274,18 @@ while read commit parents; do
 		done
 
 		newtree=$(git write-tree)
-		git commit-tree "$newtree" $parentstr < ../message > "../map-$branch/$commit" ||
+		git_commit_non_empty_tree "$newtree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
 			die "could not write rewritten commit"
 
 		# Set up new tree without extracted files
 		GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $tmptree ||
 			die "Could not initialize the index"
-		git rm --cached --ignore-unmatch -- "$@"
+		git rm -q --cached --ignore-unmatch -- "$@"
 		tmptree=$(git write-tree)
 	done
 
 	# XXX apply Extract Method :)
-	# XXX make map take a $branch parameter, update other uses
+	mapbranch=$rembr
 	parentstr=
 	for parent in $parents; do
 		for reparent in $(map "$parent"); do
@@ -274,12 +300,39 @@ while read commit parents; do
 	done
 
 	newtree=$tmptree
-	git commit-tree "$newtree" $parentstr < ../message > "../map-$branch/$commit" ||
+	git_commit_non_empty_tree "$newtree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
 		die "could not write rewritten commit"
 done <../revs
 
-srcrev=$(git rev-parse "$srcbranch")
-eval set -- "$dstbrs"
+#echo
+
+srcrev=$(git rev-parse "$srcbr")
+eval set -- "$dstbrs" "$rembr"
 for branch; do
-	printf 'create refs/heads/%s %s\n' "$branch" "$(map "$branch" "$srcrev")"
+	mapbranch=$branch
+	printf 'create refs/heads/%s %s\n' "$branch" "$(map "$srcrev")"
 done | git update-ref --stdin
+
+cd "$orig_dir"
+rm -rf "$tempdir"
+
+trap - 0
+
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+test -z "$ORIG_GIT_DIR" || {
+	GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
+}
+test -z "$ORIG_GIT_WORK_TREE" || {
+	GIT_WORK_TREE="$ORIG_GIT_WORK_TREE" &&
+	export GIT_WORK_TREE
+}
+test -z "$ORIG_GIT_INDEX_FILE" || {
+	GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
+	export GIT_INDEX_FILE
+}
+
+if [ "$(is_bare_repository)" = false ]; then
+	git read-tree -u -m HEAD || exit
+fi
+
+exit 0
