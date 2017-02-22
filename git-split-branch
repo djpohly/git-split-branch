@@ -59,15 +59,15 @@ finish_ident() {
 	echo "export GIT_$1_DATE"
 }
 
-set_ident () {
+set_ident() {
 	parse_ident_from_commit author AUTHOR committer COMMITTER
 	finish_ident AUTHOR
 	finish_ident COMMITTER
 }
 
-get_reparents () {
+get_reparents() {
 	local parentstr=
-	for parent in $parents; do
+	for parent; do
 		for reparent in $(map "$parent"); do
 			case "$parentstr " in
 			*" -p $reparent "*)
@@ -78,7 +78,7 @@ get_reparents () {
 			esac
 		done
 	done
-	printf '%s\n' -- "$parentstr"
+	printf '%s\n' "$parentstr"
 }
 
 USAGE="[-d <directory>] [-r <branch>] <sbranch>
@@ -260,18 +260,7 @@ while read commit parents; do
 		eval set -- "${dstfiles[$branch]}"
 		git reset -q $tmptree -- "$@"
 
-		parentstr=
-		for parent in $parents; do
-			for reparent in $(map "$parent"); do
-				case "$parentstr " in
-				*" -p $reparent "*)
-					;;
-				*)
-					parentstr="$parentstr -p $reparent"
-					;;
-				esac
-			done
-		done
+		parentstr=$(get_reparents $parents)
 
 		newtree=$(git write-tree)
 		git_commit_non_empty_tree "$newtree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
@@ -284,20 +273,8 @@ while read commit parents; do
 		tmptree=$(git write-tree)
 	done
 
-	# XXX apply Extract Method :)
 	mapbranch=$rembr
-	parentstr=
-	for parent in $parents; do
-		for reparent in $(map "$parent"); do
-			case "$parentstr " in
-			*" -p $reparent "*)
-				;;
-			*)
-				parentstr="$parentstr -p $reparent"
-				;;
-			esac
-		done
-	done
+	parentstr=$(get_reparents $parents)
 
 	newtree=$tmptree
 	git_commit_non_empty_tree "$newtree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
