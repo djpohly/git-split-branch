@@ -83,8 +83,8 @@ get_reparents() {
 	printf '%s\n' "$parentstr"
 }
 
-USAGE="[-d <directory>] [-r <branch>] <sbranch>
-	<dbranch> <files>... [-- <dbranch> <files>...]..."
+USAGE="[-d <workdir>] [-r <remainder>] <source>
+	<dest1> <files>... [-- <dest2> <files>...]..."
 OPTIONS_SPEC=
 . git-sh-setup
 
