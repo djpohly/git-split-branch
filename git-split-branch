@@ -258,7 +258,7 @@ while read commit parents; do
 		# Get just the specified files into the index
 		git read-tree --empty
 		eval set -- "${dstfiles[$branch]}"
-		git reset -qr $tmptree -- "$@"
+		git reset -q $tmptree -- "$@"
 
 		parentstr=
 		for parent in $parents; do
