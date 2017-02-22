@@ -307,11 +307,15 @@ done <../revs
 #echo
 
 srcrev=$(git rev-parse "$srcbr")
-eval set -- "$dstbrs" "$rembr"
-for branch; do
-	mapbranch=$branch
-	printf 'create refs/heads/%s %s\n' "$branch" "$(map "$srcrev")"
-done | git update-ref --stdin
+{
+	eval set -- "$dstbrs"
+	for branch; do
+		mapbranch=$branch
+		printf 'create refs/heads/%s %s\n' "$branch" "$(map "$srcrev")"
+	done
+	mapbranch="$rembr"
+	printf 'update refs/heads/%s %s\n' "$rembr" "$(map "$srcrev")"
+} | git update-ref --stdin
 
 cd "$orig_dir"
 rm -rf "$tempdir"
