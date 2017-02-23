@@ -60,6 +60,21 @@ load environment
 	[ "$output" = 10e8418dfa6a9136da9368970b8954f2856362b8 ]
 }
 
+@test "Splitting linear repo with multiple filenames" {
+	git init
+	make_linear_commits
+
+	$GSB -r rem-c master split-ab a b
+
+	run git rev-parse split-ab
+	[ "$status" -eq 0 ]
+	[ "$output" = ba2316913c0550b2ea7cb7f283afdfef8d7acfc2 ]
+
+	run git rev-parse rem-c
+	[ "$status" -eq 0 ]
+	[ "$output" = 7032187efd8b43043460e2cc1391da56315e7ab9 ]
+}
+
 @test "Splitting linear repo into multiple branches" {
 	git init
 	make_linear_commits
