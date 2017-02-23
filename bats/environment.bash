@@ -15,9 +15,11 @@ teardown() {
 	# Don't saw off the branch you're sitting on
 	cd /
 
-	# Make sure removal will succeed even if we have altered permissions
-	chmod -R u+rwX "$BATS_TESTDIR"
-	rm -rf "$BATS_TESTDIR"
+	if test -z "$BATS_LEAVE_TESTDIR"; then
+		# Make sure removal will succeed even if we have altered permissions
+		chmod -R u+rwX "$BATS_TESTDIR"
+		rm -rf "$BATS_TESTDIR"
+	fi
 }
 
 make_linear_commits() {
