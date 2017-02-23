@@ -11,22 +11,7 @@ map()
 	fi
 }
 
-# if you run 'skip_commit "$@"' in a commit filter, it will print
-# the (mapped) parents, effectively skipping the commit.
-
-skip_commit()
-{
-	shift;
-	while [ -n "$1" ];
-	do
-		shift;
-		map "$1";
-		shift;
-	done;
-}
-
-# if you run 'git_commit_non_empty_tree "$@"' in a commit filter,
-# it will skip commits that leave the tree untouched, commit the other.
+# skip commits that leave the tree untouched, commit others
 git_commit_non_empty_tree()
 {
 	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
@@ -37,9 +22,9 @@ git_commit_non_empty_tree()
 		git commit-tree "$@"
 	fi
 }
+
 # override die(): this version puts in an extra line break, so that
 # the progress is still visible
-
 die()
 {
 	echo >&2
@@ -212,8 +197,6 @@ while read commit parents; do
 
 	report_progress
 
-	GIT_COMMIT=$commit
-	export GIT_COMMIT
 	git cat-file commit "$commit" >../commit ||
 		die "Cannot read commit $commit"
 
