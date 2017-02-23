@@ -1,6 +1,5 @@
 #!/bin/bash
 
-functions=$(cat << \EOF
 map()
 {
 	# if it was not rewritten, take the original
@@ -47,10 +46,6 @@ die()
 	echo "$*" >&2
 	exit 1
 }
-EOF
-)
-
-eval "$functions"
 
 finish_ident() {
 	# Ensure non-empty id name.
