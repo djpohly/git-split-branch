@@ -110,6 +110,17 @@ done
 # By default, rewrite source branch to remainder in place
 : ${rembr:=$srcbr}
 
+# Set up and change to temporary directory
+orig_dir=$(pwd)
+mkdir -p "$tempdir/t" &&
+tempdir="$(cd "$tempdir"; pwd)" &&
+	cd "$tempdir/t" &&
+	workdir="$(pwd)" ||
+	die ""
+
+# Remove tempdir on exit
+trap 'cd "$orig_dir"; rm -rf "$tempdir"' 0
+
 # Now read and parse destination specs
 dstbrs=
 declare -A dstfiles=()
@@ -127,16 +138,6 @@ while branch=$1 && shift; do
 		esac
 	done
 done
-
-orig_dir=$(pwd)
-mkdir -p "$tempdir/t" &&
-tempdir="$(cd "$tempdir"; pwd)" &&
-	cd "$tempdir/t" &&
-	workdir="$(pwd)" ||
-	die ""
-
-# Remove tempdir on exit
-trap 'cd "$orig_dir"; rm -rf "$tempdir"' 0
 
 ORIG_GIT_DIR="$GIT_DIR"
 ORIG_GIT_WORK_TREE="$GIT_WORK_TREE"
