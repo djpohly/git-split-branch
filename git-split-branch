@@ -151,7 +151,7 @@ export GIT_INDEX_FILE
 # Set up ID map for rewriting parents on each branch
 eval set -- "$dstbrs" "$rembr"
 for branch in "$@"; do
-	mkdir ../map-"$branch" || die "Could not create map-$branch/ directory"
+	mkdir -p ../map-"$branch" || die "Could not create map-$branch/ directory"
 done
 
 git rev-list --reverse --topo-order --default HEAD \
