@@ -51,6 +51,8 @@ set_ident() {
 
 get_reparents() {
 	local parentstr=
+	mapbranch=$1
+	shift
 	for parent in "$@"; do
 		for reparent in $(map "$parent"); do
 			case "$parentstr " in
@@ -227,7 +229,7 @@ while read commit parents; do
 		eval set -- "${dstfiles[$branch]}"
 		git reset -q $tmptree -- "$@"
 
-		parentstr=$(get_reparents $parents)
+		parentstr=$(get_reparents "$branch" $parents)
 		newtree=$(git write-tree)
 		git_commit_non_empty_tree "$branch" "$newtree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
 			die "could not write rewritten commit"
@@ -240,7 +242,7 @@ while read commit parents; do
 	done
 
 	mapbranch=$rembr
-	parentstr=$(get_reparents $parents)
+	parentstr=$(get_reparents "$rembr" $parents)
 	git_commit_non_empty_tree "$rembr" "$tmptree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
 		die "could not write rewritten commit"
 done <../revs
