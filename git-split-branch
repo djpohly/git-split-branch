@@ -3,13 +3,11 @@
 map()
 {
 	# if it was not rewritten, take the original
-	mapbranch=$1
-	shift
-	if test -r "$workdir/../map-$mapbranch/$1"
+	if test -r "$workdir/../map-$1/$2"
 	then
-		cat "$workdir/../map-$mapbranch/$1"
+		cat "$workdir/../map-$1/$2"
 	else
-		echo "$1"
+		echo "$2"
 	fi
 }
 
@@ -224,8 +222,6 @@ while read commit parents; do
 
 	eval set -- "$dstbrs"
 	for branch in "$@"; do
-		mapbranch=$branch
-
 		# Get just the specified files into the index
 		git read-tree --empty
 		eval set -- "${dstfiles[$branch]}"
@@ -233,7 +229,7 @@ while read commit parents; do
 
 		parentstr=$(get_reparents "$branch" $parents)
 		newtree=$(git write-tree)
-		git_commit_non_empty_tree "$branch" "$newtree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
+		git_commit_non_empty_tree "$branch" "$newtree" $parentstr < ../message > "../map-$branch/$commit" ||
 			die "could not write rewritten commit"
 
 		# Set up new tree without extracted files
@@ -243,9 +239,8 @@ while read commit parents; do
 		tmptree=$(git write-tree)
 	done
 
-	mapbranch=$rembr
 	parentstr=$(get_reparents "$rembr" $parents)
-	git_commit_non_empty_tree "$rembr" "$tmptree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
+	git_commit_non_empty_tree "$rembr" "$tmptree" $parentstr < ../message > "../map-$rembr/$commit" ||
 		die "could not write rewritten commit"
 done <../revs
 
@@ -255,10 +250,8 @@ srcrev=$(git rev-parse "$srcbr")
 eval set -- "$dstbrs"
 {
 	for branch in "$@"; do
-		mapbranch=$branch
 		printf 'create refs/heads/%s %s\n' "$branch" "$(map "$branch" "$srcrev")"
 	done
-	mapbranch="$rembr"
 	printf 'update refs/heads/%s %s\n' "$rembr" "$(map "$rembr" "$srcrev")"
 } | git update-ref --stdin
 
