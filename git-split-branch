@@ -277,6 +277,9 @@ eval set -- "$dstbrs"
 	fi
 } | git update-ref --stdin
 
+# Store our potential final destination before deleting the map
+sha1=$(map "$rembr" "$srcrev")
+
 cd "$orig_dir"
 rm -rf "$tempdir"
 
@@ -294,5 +297,13 @@ test -z "$ORIG_GIT_INDEX_FILE" || {
 	GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
 	export GIT_INDEX_FILE
 }
+
+if [ "$(is_bare_repository)" = false ] && [ "$rembr" = "$srcbr" ]; then
+	if [ -n "$sha1" ]; then
+		git read-tree -u -m "$srcbr" || exit
+	else
+		git read-tree -u -m 4b825dc642cb6eb9a060e54bf8d69288fbee4904 || exit
+	fi
+fi
 
 exit 0
