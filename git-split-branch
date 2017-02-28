@@ -3,6 +3,8 @@
 map()
 {
 	# if it was not rewritten, take the original
+	mapbranch=$1
+	shift
 	if test -r "$workdir/../map-$mapbranch/$1"
 	then
 		cat "$workdir/../map-$mapbranch/$1"
@@ -17,7 +19,7 @@ git_commit_non_empty_tree()
 	mapbranch=$1
 	shift
 	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
-		map "$3"
+		map "$mapbranch" "$3"
 	elif test $# = 1 && test "$1" = 4b825dc642cb6eb9a060e54bf8d69288fbee4904; then
 		:
 	else
@@ -54,7 +56,7 @@ get_reparents() {
 	mapbranch=$1
 	shift
 	for parent in "$@"; do
-		for reparent in $(map "$parent"); do
+		for reparent in $(map "$mapbranch" "$parent"); do
 			case "$parentstr " in
 			*" -p $reparent "*)
 				;;
@@ -254,10 +256,10 @@ eval set -- "$dstbrs"
 {
 	for branch in "$@"; do
 		mapbranch=$branch
-		printf 'create refs/heads/%s %s\n' "$branch" "$(map "$srcrev")"
+		printf 'create refs/heads/%s %s\n' "$branch" "$(map "$branch" "$srcrev")"
 	done
 	mapbranch="$rembr"
-	printf 'update refs/heads/%s %s\n' "$rembr" "$(map "$srcrev")"
+	printf 'update refs/heads/%s %s\n' "$rembr" "$(map "$rembr" "$srcrev")"
 } | git update-ref --stdin
 
 cd "$orig_dir"
