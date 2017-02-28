@@ -98,11 +98,30 @@ load environment
 	[ "$output" = 10e8418dfa6a9136da9368970b8954f2856362b8 ]
 }
 
-@test "Emptied remainder branch is deleted" {
+@test "Emptied source branch is deleted" {
 	git init
 	make_linear_commits
 
 	$GSB master split-all a b c
 
-	! git rev-parse master || false
+	! git branch --list master | grep '' || false
+}
+
+@test "Empty remainder branch is not created" {
+	git init
+	make_linear_commits
+
+	$GSB -r rem master split-all a b c
+
+	! git branch --list rem | grep '' || false
+}
+
+@test "Untracked files remain in work tree if source is deleted" {
+	git init
+	make_linear_commits
+	touch d
+
+	$GSB master split-all a b c
+
+	[ -e d ]
 }
