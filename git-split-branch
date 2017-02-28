@@ -306,8 +306,4 @@ test -z "$ORIG_GIT_INDEX_FILE" || {
 	export GIT_INDEX_FILE
 }
 
-if [ "$(is_bare_repository)" = false ]; then
-	git read-tree -u -m HEAD || exit
-fi
-
 exit 0
