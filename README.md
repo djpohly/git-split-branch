@@ -5,14 +5,14 @@ of which contains a specified set of the original branch's files and only the
 commits which affect that set.
 
 This is a similar effect to what
-[**git-filter-branch**](https://github.com/git/git/tree/master/git-filter-branch.sh)
+[**git-filter-branch**][2]
 would produce by using an index filter to select specific files.  (In fact,
 git-split-branch is obviously and unabashedly modified from
 git-filter-branch.)  But unlike...
 
 * **[git-subtree][1]**, it can split off an arbitrary set of files, not just a
   subdirectory.
-* **[git-filter-branch][2]**, it can create multiple branches.
+* **git-filter-branch**, it can create multiple branches.
 * **multiple git-filter-branch calls**, it only requires one pass over the
   commit history.
 * **[other][3] [scripts][4] [that][5] [wrap][6] [git-filter-branch][7]**, see
