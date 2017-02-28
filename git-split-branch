@@ -223,33 +223,26 @@ while read commit parents; do
 		cat
 	} <../commit >../message
 
-	tmptree=$commit
+	GIT_INDEX_FILE=$GIT_INDEX_FILE-rem GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $commit ||
+		die "Could not initialize the index"
 
 	eval set -- "$dstbrs"
 	for branch in "$@"; do
 		# Get just the specified files into the index
-		git read-tree --empty
 		eval set -- "${dstfiles[$branch]}"
-		git reset -q $tmptree -- "$@"
+		GIT_INDEX_FILE=$GIT_INDEX_FILE-rem git rm -qr --cached --ignore-unmatch -- "$@"
+		git read-tree --empty
+		git reset -q $commit -- "$@"
 
 		parentstr=$(get_reparents "$branch" $parents)
 		newtree=$(git write-tree)
 		git_commit_non_empty_tree "$branch" "$newtree" $parentstr < ../message > "../map-$branch/$commit" ||
 			die "could not write rewritten commit"
-
-		if [ -n "$excl" ]; then
-			tmptree=$newtree
-		else
-			# Set up new tree without extracted files
-			GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $tmptree ||
-				die "Could not initialize the index"
-			git rm -qr --cached --ignore-unmatch -- "$@"
-			tmptree=$(git write-tree)
-		fi
 	done
 
 	parentstr=$(get_reparents "$rembr" $parents)
-	git_commit_non_empty_tree "$rembr" "$tmptree" $parentstr < ../message > "../map-$rembr/$commit" ||
+	remtree=$(GIT_INDEX_FILE=$GIT_INDEX_FILE-rem git write-tree)
+	git_commit_non_empty_tree "$rembr" "$remtree" $parentstr < ../message > "../map-$rembr/$commit" ||
 		die "could not write rewritten commit"
 done <../revs
 
