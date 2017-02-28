@@ -67,7 +67,7 @@ get_reparents() {
 	printf '%s\n' "$parentstr"
 }
 
-USAGE="[-x] [-d <workdir>] [-r <remainder>] <source>
+USAGE="[-d <workdir>] [-r <remainder>] <source>
 	<dest1> <files>... [-- <dest2> <files>...]..."
 OPTIONS_SPEC=
 . git-sh-setup
@@ -76,7 +76,6 @@ if [ "$(is_bare_repository)" = false ]; then
 	require_clean_work_tree 'split a branch'
 fi
 
-excl=
 tempdir=.git-rewrite
 rembr=
 srcbr=
@@ -85,9 +84,6 @@ do
 	case "$arg" in
 	--)
 		break
-		;;
-	-x)
-		excl=t
 		;;
 	-d*)
 		tempdir=${arg:2}
