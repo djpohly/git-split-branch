@@ -67,7 +67,7 @@ get_reparents() {
 	printf '%s\n' "$parentstr"
 }
 
-USAGE="[-d <workdir>] [-r <remainder>] <source>
+USAGE="[-x] [-d <workdir>] [-r <remainder>] <source>
 	<dest1> <files>... [-- <dest2> <files>...]..."
 OPTIONS_SPEC=
 . git-sh-setup
@@ -76,6 +76,7 @@ if [ "$(is_bare_repository)" = false ]; then
 	require_clean_work_tree 'split a branch'
 fi
 
+excl=
 tempdir=.git-rewrite
 rembr=
 srcbr=
@@ -84,6 +85,9 @@ do
 	case "$arg" in
 	--)
 		break
+		;;
+	-x)
+		excl=t
 		;;
 	-d*)
 		tempdir=${arg:2}
@@ -232,11 +236,15 @@ while read commit parents; do
 		git_commit_non_empty_tree "$branch" "$newtree" $parentstr < ../message > "../map-$branch/$commit" ||
 			die "could not write rewritten commit"
 
-		# Set up new tree without extracted files
-		GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $tmptree ||
-			die "Could not initialize the index"
-		git rm -qr --cached --ignore-unmatch -- "$@"
-		tmptree=$(git write-tree)
+		if [ -n "$excl" ]; then
+			tmptree=$newtree
+		else
+			# Set up new tree without extracted files
+			GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $tmptree ||
+				die "Could not initialize the index"
+			git rm -qr --cached --ignore-unmatch -- "$@"
+			tmptree=$(git write-tree)
+		fi
 	done
 
 	parentstr=$(get_reparents "$rembr" $parents)
