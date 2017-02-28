@@ -7,11 +7,27 @@ commits which affect that set.
 This is a similar effect to what
 [**git-filter-branch**](https://github.com/git/git/tree/master/git-filter-branch.sh)
 would produce by using an index filter to select specific files.  (In fact,
-git-split-branch is obviously and unabashedly based on git-filter-branch.)
-However, git-filter-branch can only rewrite a single branch, whereas
-git-split-branch is able to create any number of branches.  In addition,
-git-split-branch assigns the leftover files to a "remainder" branch or rewrite
-the original source to contain only the leftovers.
+git-split-branch is obviously and unabashedly modified from
+git-filter-branch.)  But unlike...
+
+* **git-subtree[1]**, it can split off an arbitrary set of files, not just a
+  subdirectory.
+* **[git-filter-branch][2]**, it can create multiple branches.
+* **multiple git-filter-branch calls**, it only requires one pass over the
+  commit history.
+* **[other][3] [scripts][4] [that][5] [wrap][6] [git-filter-branch][7]**, see
+  one of the previous two points.
+
+[1]: https://github.com/git/git/blob/master/contrib/subtree/git-subtree.sh
+[2]: https://github.com/git/git/blob/master/git-filter-branch.sh
+[3]: https://github.com/ajdruff/git-splits
+[4]: https://github.com/vangorra/git_split
+[5]: https://github.com/phord/git-split/blob/master/git-split.sh
+[6]: https://gist.github.com/aseigneurin/7531087
+[7]: https://gist.github.com/tijn/5301258
+
+In addition, git-split-branch assigns the leftover files to a "remainder"
+branch or rewrites the original source branch to contain only the leftovers.
 
 On the other hand, git-filter-branch allows for other filters to be applied,
 while git-split-branch is single in its purpose.
