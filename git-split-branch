@@ -162,8 +162,9 @@ for branch in "$@"; do
 	mkdir -p ../map-"$branch" || die "Could not create map-$branch/ directory"
 done
 
+srcrev=$(git rev-parse "$srcbr")
 git rev-list --reverse --topo-order --default HEAD \
-	--parents --simplify-merges "$srcbr" >../revs ||
+	--parents --simplify-merges "$srcrev" >../revs ||
 	die "Could not get the commits"
 commits=$(wc -l <../revs | tr -d " ")
 
@@ -254,13 +255,37 @@ done <../revs
 
 echo
 
-srcrev=$(git rev-parse "$srcbr")
 eval set -- "$dstbrs"
 {
+	# Create refs for our split branches
 	for branch in "$@"; do
-		printf 'create refs/heads/%s %s\n' "$branch" "$(map "$branch" "$srcrev")"
+		sha1=$(map "$branch" "$srcrev")
+		if [ -z "$sha1" ]; then
+			echo "$branch: matched no files, not creating" >&2
+			continue
+		fi
+		echo "$branch: creating at $(git rev-parse --short "$sha1")" >&2
+		printf 'create refs/heads/%s %s\n' "$branch" "$sha1"
 	done
-	printf 'update refs/heads/%s %s\n' "$rembr" "$(map "$rembr" "$srcrev")"
+
+	# Create or update the ref for our remainder
+	sha1=$(map "$rembr" "$srcrev")
+	if [ "$rembr" != "$srcbr" ]; then
+		if [ -z "$sha1" ]; then
+			echo "$rembr: no files remained, not creating" >&2
+		else
+			echo "$rembr: creating at $(git rev-parse --short "$sha1")" >&2
+			printf 'create refs/heads/%s %s\n' "$rembr" "$sha1"
+		fi
+	else
+		if [ -z "$sha1" ]; then
+			echo "$rembr: no files remained, deleting" >&2
+			printf 'delete refs/heads/%s %s\n' "$rembr" "$srcrev"
+		else
+			echo "$rembr: rewriting to $(git rev-parse --short "$sha1")" >&2
+			printf 'update refs/heads/%s %s %s\n' "$rembr" "$sha1" "$srcrev"
+		fi
+	fi
 } | git update-ref --stdin
 
 cd "$orig_dir"
