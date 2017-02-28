@@ -97,3 +97,12 @@ load environment
 	[ "$status" -eq 0 ]
 	[ "$output" = 10e8418dfa6a9136da9368970b8954f2856362b8 ]
 }
+
+@test "Emptied remainder branch is deleted" {
+	git init
+	make_linear_commits
+
+	$GSB master split-all a b c
+
+	! git rev-parse master || false
+}
