@@ -14,6 +14,8 @@ map()
 # skip commits that leave the tree untouched, commit others
 git_commit_non_empty_tree()
 {
+	mapbranch=$1
+	shift
 	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
 		map "$3"
 	elif test $# = 1 && test "$1" = 4b825dc642cb6eb9a060e54bf8d69288fbee4904; then
@@ -226,7 +228,8 @@ while read commit parents; do
 		git reset -q $tmptree -- "$@"
 
 		parentstr=$(get_reparents $parents)
-		git_commit_non_empty_tree "$(git write-tree)" $parentstr < ../message > "../map-$mapbranch/$commit" ||
+		newtree=$(git write-tree)
+		git_commit_non_empty_tree "$branch" "$newtree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
 			die "could not write rewritten commit"
 
 		# Set up new tree without extracted files
@@ -238,7 +241,7 @@ while read commit parents; do
 
 	mapbranch=$rembr
 	parentstr=$(get_reparents $parents)
-	git_commit_non_empty_tree "$tmptree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
+	git_commit_non_empty_tree "$rembr" "$tmptree" $parentstr < ../message > "../map-$mapbranch/$commit" ||
 		die "could not write rewritten commit"
 done <../revs
 
