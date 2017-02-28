@@ -10,7 +10,7 @@ would produce by using an index filter to select specific files.  (In fact,
 git-split-branch is obviously and unabashedly modified from
 git-filter-branch.)  But unlike...
 
-* **git-subtree[1]**, it can split off an arbitrary set of files, not just a
+* **[git-subtree][1]**, it can split off an arbitrary set of files, not just a
   subdirectory.
 * **[git-filter-branch][2]**, it can create multiple branches.
 * **multiple git-filter-branch calls**, it only requires one pass over the
