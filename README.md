@@ -32,6 +32,21 @@ branch or rewrites the original source branch to contain only the leftovers.
 On the other hand, git-filter-branch allows for other filters to be applied,
 while git-split-branch is single in its purpose.
 
+## Usage
+
+    git split-branch [-d <workdir>] [-r <remainder>] <source> <dest1> <paths1>... [ -- <dest2> <paths2>... ]...
+
+This command will split the contents of the `<source>` branch, creating branch
+`<dest1>` to contain only files matching `<paths1>`, branch `<dest2>` to
+contain `<paths2>`, and so forth.  The remaining unsplit files will be written
+to branch `<remainder>` if the `-r` flag is given; otherwise `<source>` will
+be rewritten to contain the remaining files only.
+
+As with git-filter-branch, the directory in which work is done can be
+specified (e.g. on a tmpfs) with `-d`.
+
+## Motivation
+
 This utility was motivated by the desire to migrate a large $HOME repository
 to [vcsh](https://github.com/RichiH/vcsh).  This repository contained seven
 years of configuration, grad school work, personal writings, code for side
