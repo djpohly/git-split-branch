@@ -32,6 +32,12 @@ branch or rewrites the original source branch to contain only the leftovers.
 On the other hand, git-filter-branch allows for other filters to be applied,
 while git-split-branch is single in its purpose.
 
+## Install
+
+Download and place git-split-branch somewhere in your $PATH, or symlink from its git repository to your $PATH.
+
+No other setup is required before invoking as `git split-branch`.
+
 ## Usage
 
     git split-branch [-d <workdir>] [-r <remainder>] <source> <dest1> <paths1>... [ -- <dest2> <paths2>... ]...
