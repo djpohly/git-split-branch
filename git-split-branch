@@ -67,7 +67,7 @@ get_reparents() {
 	printf '%s\n' "$parentstr"
 }
 
-USAGE="[-d <workdir>] [-r <remainder>] <source>
+USAGE="[-d <workdir>] [-r <remainder>] [-b <base>] <source>
 	<dest1> <files>... [-- <dest2> <files>...]..."
 OPTIONS_SPEC=
 . git-sh-setup
@@ -79,6 +79,7 @@ fi
 tempdir=.git-rewrite
 rembr=
 srcbr=
+basecommit=
 while arg=$1; shift
 do
 	case "$arg" in
@@ -99,6 +100,13 @@ do
 			shift || usage
 		fi
 		;;
+	-b*)
+		basecommit=${arg:2}
+		if [ -z "$basecommit" ]; then
+			basecommit=$1
+			shift || usage
+		fi
+		;;
 	-?*)
 		usage
 		;;
@@ -113,6 +121,9 @@ done
 
 # By default, rewrite source branch to remainder in place
 : ${rembr:=$srcbr}
+
+# By default, set base commit to empty tree
+: ${basecommit:=4b825dc642cb6eb9a060e54bf8d69288fbee4904}
 
 # Set up and change to temporary directory
 orig_dir=$(pwd)
@@ -160,7 +171,7 @@ done
 
 srcrev=$(git rev-parse "$srcbr")
 git rev-list --reverse --topo-order --default HEAD \
-	--parents --simplify-merges "$srcrev" >../revs ||
+	--parents --simplify-merges "$basecommit".."$srcrev" >../revs ||
 	die "Could not get the commits"
 commits=$(wc -l <../revs | tr -d " ")
 
@@ -227,7 +238,7 @@ while read commit parents; do
 		# Get just the specified files into the index
 		eval set -- "${dstfiles[$branch]}"
 		GIT_INDEX_FILE=$GIT_INDEX_FILE-rem git rm -qr --cached --ignore-unmatch -- "$@"
-		git read-tree --empty
+		git read-tree $basecommit
 		git reset -q $commit -- "$@"
 
 		parentstr=$(get_reparents "$branch" $parents)
